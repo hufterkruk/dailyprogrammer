@@ -1,14 +1,17 @@
 module Main where
   import Data.Maybe
   import Data.Char
+  import Data.List
+  import Data.List.Split
 
-  main = interact $ handleWires S0 . readWires
+  --main = interact $ handleWires S0 . readWires
+  main = bonus
 
   data State = S0 | S1 | S2 | S3 | S4 | S5 | E | Boom
     deriving (Eq)
 
   data Wire = White | Black | Red | Orange | Green
-    deriving (Read)
+    deriving (Read, Eq)
 
   readWires :: String -> [Wire]
   readWires = map (read . capitalize) . lines
@@ -29,13 +32,29 @@ module Main where
   stateTransition _  _      = Boom
 
   handleWires :: State -> [Wire] -> String
-  handleWires _ []     = "defused"
-  handleWires E _      = "defused"
+  handleWires E []     = "defused\n"
+  handleWires _ []     = "boom\n"
+  handleWires E _      = "boom\n"
   handleWires s (x:xs) =
     if transition /= Boom
       then handleWires transition xs
-      else "boom"
+      else "boom\n"
     where transition = stateTransition s x
 
-  bonus = undefined
-  
+  bonus = interact $ doPerms . bonusRead
+
+  bonusRead :: String -> [Wire]
+  bonusRead = map (read . capitalize) . concat . map f . map (splitOn " ") . lines
+    where f [x,y] = replicate (read y) x
+          f _ = []
+          capitalize = \(x:xs) -> toUpper x : xs
+
+  doPerms :: [Wire] -> String
+  doPerms xs =
+    if (any (==Green) xs) && (any (==Orange) xs)
+      then
+        if any (=="defused\n") perms
+          then "defusable\n"
+          else "not defusable\n"
+      else "not defusable\n"
+    where perms = map (handleWires S0) (permutations xs)
