@@ -45,13 +45,14 @@ module Main where
 
   bonusRead :: String -> [Wire]
   bonusRead = map (read . capitalize) . concat . map f . map (splitOn " ") . lines
-    where f [x,y] = replicate (read y) x
+    where f ["black",_] = ["black"]
+          f [x,y] = replicate (read y) x
           f _ = []
           capitalize = \(x:xs) -> toUpper x : xs
 
   doPerms :: [Wire] -> String
   doPerms xs =
-    if (any (==Green) xs) && (any (==Orange) xs)
+    if (any (==Green) xs) && (any (==Orange) xs) -- Must have at least one green and one orange
       then
         if any (=="defused\n") perms
           then "defusable\n"
