@@ -15,7 +15,7 @@ module Main where
 
   readWires :: String -> [Wire]
   readWires = map (read . capitalize) . lines
-   where capitalize = \(x:xs) -> toUpper x : xs
+   where capitalize (x:xs) = toUpper x : xs
 
   stateTransition :: State -> Wire -> State
   stateTransition S0 White  = S1
@@ -44,18 +44,15 @@ module Main where
   bonus = interact $ doPerms . bonusRead
 
   bonusRead :: String -> [Wire]
-  bonusRead = map (read . capitalize) . concat . map f . map (splitOn " ") . lines
+  bonusRead = map (read . capitalize) . concatMap f . map (splitOn " ") . lines
     where f ["black",_] = ["black"]
           f [x,y] = replicate (read y) x
           f _ = []
-          capitalize = \(x:xs) -> toUpper x : xs
+          capitalize (x:xs) = toUpper x : xs
 
   doPerms :: [Wire] -> String
   doPerms xs =
-    if (any (==Green) xs) && (any (==Orange) xs) -- Must have at least one green and one orange
-      then
-        if any (=="defused\n") perms
-          then "defusable\n"
-          else "not defusable\n"
+    if elem Green xs && elem Orange xs && elem "defused\n" perms -- Must have at least one green and one orange
+      then "defusable\n"
       else "not defusable\n"
     where perms = map (handleWires S0) (permutations xs)
