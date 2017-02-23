@@ -6,21 +6,33 @@ l2i c = fromEnum c - 96
 i2l :: Int -> Char
 i2l i = toEnum (i+96) :: Char
 
-encrypt' :: String -> String -> String
-encrypt' [] _ = []
-encrypt' _ [] = error "no key!"
-encrypt' (m:ms) (k:ks) = enc m k : encrypt' ms ks
+data Crypt = Encrypt | Decrypt
+  deriving (Eq)
+
+crypt' :: String -> String -> Bool -> String
+crypt' [] _ _ = []
+crypt' _ [] _ = error "no key!"
+crypt' (m:ms) (k:ks) b = enc m k : crypt' ms ks b
   where
     enc :: Char -> Char -> Char
-    enc a b = i2l $ (l2i a + l2i b) `mod` 26
+    enc x y | b = i2l $ (l2i x + l2i y - 1) `mod` 26
+            | otherwise = i2l $ (l2i x - l2i y + 1) `mod` 26
 
-encrypt :: String -> String -> String
-encrypt msg key
+crypt :: String -> String -> Crypt -> String
+crypt msg key encdec
   | kl < ml
-    = encrypt' lMsg (concat $ replicate ((ml `div` kl) + 1) lKey)
-  | otherwise = encrypt' lMsg lKey
+    = crypt' lMsg (concat $ replicate ((ml `div` kl) + 1) lKey) b
+  | otherwise = crypt' lMsg lKey b
   where
     kl = length key
     ml = length msg
     lMsg = map toLower msg
     lKey = map toLower key
+    b | encdec == Encrypt = True
+      | otherwise = False
+
+encrypt :: String -> String -> String
+encrypt msg key = crypt msg key Encrypt
+
+decrypt :: String -> String -> String
+decrypt msg key = crypt msg key Decrypt
